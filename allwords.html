@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html {
+            overflow-y: scroll;
+        }
+        .pattern-container {
+            position: relative;
+        }
+        .pattern-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 100%;
+            background-image: url('https://www.transparenttextures.com/patterns/diagonal-striped-brick.png');
+            background-repeat: repeat-y;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+        .tab-active {
+            background-color: #2563eb;
+            color: white;
+        }
+        .header-container {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background-color: #2563eb;
+            width: 100%;
+        }
+        .nav-container {
+            position: sticky;
+            top: 64px;
+            z-index: 10;
+            background-color: white;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        body {
+            padding-right: var(--scrollbar-width, 0px);
+            box-sizing: border-box;
+        }
+        main {
+            padding-top: calc(64px + 56px + 24px);
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+        #overview-section {
+            margin-top: 1.5rem;
+        }
+        .flashcard {
+            perspective: 1000px;
+            width: 300px;
+            height: 400px;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+        .settings-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 100;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .settings-panel.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .settings-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .close-settings {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #666;
+        }
+        .settings-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            cursor: pointer;
+            color: white;
+            font-size: 1.5rem;
+            z-index: 21;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .settings-icon:hover {
+            background-color: rgba(0,0,0,0.3);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 flex flex-col pattern-container">
+        <div class="settings-icon" id="settings-icon">⚙️</div>
+        <header class="header-container bg-blue-600 text-white p-4 shadow-lg">
+            <div class="max-w-md mx-auto">
+                <h1 class="text-3xl font-bold text-center">Language Learning</h1>
+            </div>
+        </header>
+        <nav class="nav-container shadow-md p-2">
+            <div class="flex justify-between max-w-md mx-auto">
+                <button id="overview-tab" class="tab-active px-4 py-2 text-sm font-semibold rounded hover:bg-blue-500 hover:text-white transition flex-1 text-center">Overview</button>
+                <button id="flashcards-tab" class="px-4 py-2 text-sm font-semibold rounded hover:bg-blue-500 hover:text-white transition flex-1 text-center">Flash Cards</button>
+                <button id="test-tab" class="px-4 py-2 text-sm font-semibold rounded hover:bg-blue-500 hover:text-white transition flex-1 text-center">Test Yourself</button>
+            </div>
+        </nav>
+        <main class="container mx-auto p-6 content flex-1">
+            <section id="overview-section" class="grid grid-cols-1 gap-12 max-w-md mx-auto">
+            </section>
+            <section id="flashcards-section" class="hidden flex flex-col items-center max-w-md mx-auto">
+                <div class="mb-4">
+                    <label class="inline-flex items-center mr-4">
+                        <input type="radio" name="flashcard-mode" value="random" checked class="mr-2">
+                        <span>Random</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="flashcard-mode" value="alphabetical" class="mr-2">
+                        <span>Alphabetical</span>
+                    </label>
+                </div>
+                <div class="flashcard" id="flashcard-container">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <img id="flashcard-image" src="" alt="Vocabulary" class="w-48 h-48 object-cover rounded mb-4">
+                            <h2 class="text-xl font-semibold text-gray-800" id="flashcard-word"></h2>
+                        </div>
+                        <div class="flashcard-back">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4" id="flashcard-translation"></h2>
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition" id="next-flashcard">Next Card</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="test-section" class="hidden flex flex-col items-center max-w-md mx-auto">
+                <div class="bg-white rounded-lg shadow-md p-6 w-full">
+                    <img id="test-image" src="" alt="Vocabulary" class="w-48 h-48 object-cover rounded mb-4 mx-auto">
+                    <input id="test-input" type="text" placeholder="Enter translation" class="border border-gray-300 rounded p-2 mb-4 w-full">
+                    <div class="flex justify-between">
+                        <button id="test-submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Submit</button>
+                        <button id="skip-test" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">Skip</button>
+                    </div>
+                    <p id="test-feedback" class="text-lg mt-4 text-center"></p>
+                </div>
+                <div class="mt-4 text-center">
+                    <p id="test-progress" class="text-gray-600"></p>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settings-overlay"></div>
+    <div class="settings-panel" id="settings-panel">
+        <span class="close-settings" id="close-settings">×</span>
+        <h2 class="text-xl font-bold mb-4">Select Topics</h2>
+        <div id="topics-list" class="grid grid-cols-1 gap-2">
+            <!-- Topics will be added here dynamically -->
+        </div>
+    </div>
+
+    <script>
+        // Vocabulary data organized by topics
+        const vocabularyData = {
+            "Animals": [
+            { word: "Monkey", translation: "Gnisus", image: "https://i.imgur.com/vJtlBWM.png", link: "https://example.com/monkey" },
+            { word: "Alpaka", translation: "Al Aboc", image: "https://i.imgur.com/agGh5eh.png", link: "https://example.com/dog" },
+            { word: "Polar Bear", translation: "Eisata", image: "https://i.imgur.com/5GbXrOr.png", link: "https://example.com/elephant" },
+            { word: "Brown Bear", translation: "Bralata", image: "https://i.imgur.com/HiRxSt9.png", link: "https://example.com/lion" },
+            { word: "Beaver", translation: "Castor", image: "https://i.imgur.com/R0oe4rm.png", link: "https://example.com/lion" },
+            { word: "Chameleon", translation: "Tentum", image: "https://i.imgur.com/FaLXAMx.png", link: "https://example.com/lion" },
+            { word: "Dolphin", translation: "Ulde", image: "https://i.imgur.com/xv5qBci.png", link: "https://example.com/monkey" },
+            { word: "Lizard", translation: "Polto", image: "https://i.imgur.com/RbWebzM.png", link: "https://example.com/dog" },
+            { word: "Donkey", translation: "Darkat", image: "https://i.imgur.com/C8cqOed.png", link: "https://example.com/elephant" },
+            { word: "Squirrel", translation: "Gobosoo", image: "https://i.imgur.com/CGfZ0dL.png", link: "https://example.com/lion" },
+            { word: "Elephant", translation: "Nölk", image: "https://i.imgur.com/6HZOH62.png", link: "https://example.com/lion" },
+            { word: "Moose", translation: "Krotus", image: "https://i.imgur.com/TQGqUdw.png", link: "https://example.com/lion" },
+            { word: "Fly", translation: "Dei", image: "https://i.imgur.com/jePbBkC.png", link: "https://example.com/monkey" },
+            { word: "Bat", translation: "Mortis", image: "https://i.imgur.com/jHL2dOp.png", link: "https://example.com/dog" },
+            { word: "Fish", translation: "Fisk", image: "https://i.imgur.com/njceXcm.png", link: "https://example.com/elephant" },
+            { word: "Flamingo", translation: "Tismu", image: "https://i.imgur.com/U1YZCRS.png", link: "https://example.com/lion" },
+            { word: "Fox", translation: "Fux", image: "https://i.imgur.com/s7Yr0PJ.png", link: "https://example.com/lion" },
+            { word: "Goose", translation: "Hanni", image: "https://i.imgur.com/xkTapjG.png", link: "https://example.com/lion" },
+            { word: "Dog", translation: "Tschikk", image: "https://i.imgur.com/2mIalaC.png", link: "https://example.com/dog" },
+            { word: "Rabbit", translation: "Nusi", image: "https://i.imgur.com/SGNsw9Q.png", link: "https://example.com/elephant" },
+            { word: "Shark", translation: "Mert", image: "https://i.imgur.com/YUETl1l.png", link: "https://example.com/lion" },
+            { word: "Stag", translation: "Stagof", image: "https://i.imgur.com/SaulDxd.png", link: "https://example.com/lion" },
+            { word: "Hedgehog", translation: "Urnegge", image: "https://i.imgur.com/TYmz087.png", link: "https://example.com/lion" },
+            { word: "Crocodile", translation: "Kovarat", image: "https://i.imgur.com/Ki286oU.png", link: "https://example.com/dog" },
+            { word: "Ant", translation: "Liki", image: "https://i.imgur.com/Hekvb6u.png", link: "https://example.com/elephant" },
+            { word: "Cat", translation: "Gambel", image: "https://i.imgur.com/HTk7VPr.png", link: "https://example.com/lion" },
+            { word: "Cow", translation: "Gombe", image: "https://i.imgur.com/3uLI3RB.png", link: "https://example.com/lion" },
+            { word: "Kangaroo", translation: "Wiid", image: "https://i.imgur.com/rgFpHUf.png", link: "https://example.com/lion" },
+            { word: "Koala", translation: "Sung Regi", image: "https://i.imgur.com/eTqUsHE.png", link: "https://example.com/lion" },
+            { word: "Camel", translation: "Berk", image: "https://i.imgur.com/NPE8vUm.png", link: "https://example.com/lion" },		
+            { word: "Llama", translation: "Al Pütt", image: "https://i.imgur.com/rL2qT5w.png", link: "https://example.com/dog" },
+            { word: "Lion", translation: "Güg", image: "https://i.imgur.com/7TfW8zX.png", link: "https://example.com/elephant" },
+            { word: "Chicken", translation: "Mortes", image: "https://i.imgur.com/3FXcGsz.png", link: "https://example.com/lion" },
+            { word: "Duck", translation: "Bikk", image: "https://i.imgur.com/U3vdYjD.png", link: "https://example.com/lion" },	
+            { word: "Mouse", translation: "Griff", image: "https://i.imgur.com/BWDqATx.png", link: "https://example.com/lion" },
+            { word: "Ladybug", translation: "Labarb", image: "https://i.imgur.com/PAgDtcp.png", link: "https://example.com/monkey" },
+            { word: "Mole", translation: "Möllerus", image: "https://i.imgur.com/oKQFiQy.png", link: "https://example.com/dog" },
+            { word: "Hippo", translation: "Telogombe", image: "https://i.imgur.com/8KUeLJI.png", link: "https://example.com/elephant" },
+            { word: "Rhino", translation: "Oldar", image: "https://i.imgur.com/2sqom0z.png", link: "https://example.com/lion" },
+            { word: "Otter", translation: "Garton", image: "https://i.imgur.com/pIWDaeS.png", link: "https://example.com/lion" },
+            { word: "Penguin", translation: "Mestor", image: "https://i.imgur.com/R5VCAJr.png", link: "https://example.com/elephant" },
+            { word: "Panda", translation: "Tiping", image: "https://i.imgur.com/KNB6f9X.png", link: "https://example.com/lion" },
+            { word: "Jellyfish", translation: "Baltus", image: "https://i.imgur.com/yh6IMPd.png", link: "https://example.com/lion" },
+            { word: "Butterfly", translation: "Elbimba", image: "https://i.imgur.com/dl73DhS.png", link: "https://example.com/monkey" },
+            { word: "Boar", translation: "Afro", image: "https://i.imgur.com/JxWwTLn.png", link: "https://example.com/dog" },
+            { word: "Worm", translation: "Vermis", image: "https://i.imgur.com/uHbz3ef.png", link: "https://example.com/elephant" },
+            { word: "Deer", translation: "Pufen", image: "https://i.imgur.com/8QPufHn.png", link: "https://example.com/lion" },
+            { word: "Seal", translation: "Clotsche", image: "https://i.imgur.com/4BzuNtZ.png", link: "https://example.com/lion" },
+            { word: "Sheep", translation: "Baoba", image: "https://i.imgur.com/jVK6Q0b.png", link: "https://example.com/elephant" },	
+            { word: "Snake", translation: "Schakk", image: "https://i.imgur.com/X3y8W1E.png", link: "https://example.com/lion" },
+            { word: "Turtle", translation: "Horak", image: "https://i.imgur.com/AC7mzAt.png", link: "https://example.com/elephant" },
+            { word: "Snail", translation: "Görreg", image: "https://i.imgur.com/jE60Sko.png", link: "https://example.com/lion" },		
+            { word: "Pig", translation: "Pigges", image: "https://i.imgur.com/5w9auVw.png", link: "https://example.com/lion" },
+            { word: "Tiger", translation: "Nana", image: "https://i.imgur.com/Q4OhkfU.png", link: "https://example.com/lion" },
+            { word: "Spider", translation: "Bon", image: "https://i.imgur.com/wW4JN6n.png", link: "https://example.com/dog" },		
+            { word: "Wasp", translation: "Fitschi", image: "https://i.imgur.com/TbBSSD9.png", link: "https://example.com/lion" },
+            { word: "Wolf", translation: "Fema", image: "https://i.imgur.com/W1VJJQb.png", link: "https://example.com/monkey" },
+            { word: "Zebra", translation: "Jamping", image: "https://i.imgur.com/CLilwI8.png", link: "https://example.com/dog" },
+            { word: "Goat", translation: "Blaum", image: "https://i.imgur.com/NgYZZB1.png", link: "https://example.com/elephant" },	
+            { word: "Horse", translation: "Hürse", image: "https://i.imgur.com/4I8wgkM.png", link: "https://example.com/dog" },
+            { word: "Buffalo", translation: "Garalf", image: "https://i.imgur.com/vGQvDpb.png", link: "https://example.com/elephant" },	
+            { word: "Giraffe", translation: "Tolbi", image: "https://i.imgur.com/yXkeWtK.png", link: "https://example.com/lion" },
+            { word: "Frog", translation: "Erap", image: "https://i.imgur.com/33FTPwy.png", link: "https://example.com/lion" },
+            { word: "Squid", translation: "Schlimp", image: "https://i.imgur.com/sL2d0xK.png", link: "https://example.com/monkey" },
+            { word: "Crab", translation: "Kora", image: "https://i.imgur.com/Uhua6fJ.png", link: "https://example.com/dog" },	
+            { word: "Bird", translation: "Ersoo", image: "https://i.imgur.com/l971cYO.png", link: "https://example.com/dog" },	
+            { word: "Turkey", translation: "Zwittel", image: "https://i.imgur.com/1JMZao3.png", link: "https://example.com/lion" },			
+            { word: "Bee", translation: "Motedei", image: "https://i.imgur.com/7QDsr6x.png", link: "https://example.com/tiger" }
+            ],
+            "Clothing": [
+                { word: "T-Shirt", translation: "Leik", image: "https://i.imgur.com/4t2oWET.png", link: "https://example.com/monkey" },
+            { word: "Shirt", translation: "Lierran", image: "https://i.imgur.com/M0yB7Ts.png", link: "https://example.com/dog" },
+            { word: "Trousers", translation: "Gast", image: "https://i.imgur.com/dGTPNVD.png", link: "https://example.com/elephant" },
+            { word: "Sweater", translation: "Lamba", image: "https://i.imgur.com/uZ0dTQR.png", link: "https://example.com/lion" },
+            { word: "Socks", translation: "Mozes", image: "https://i.imgur.com/7g9YX2D.png", link: "https://example.com/lion" },
+            { word: "Shoes", translation: "Apartes", image: "https://i.imgur.com/eke00LG.png", link: "https://example.com/lion" },
+            { word: "Jacket", translation: "Anorak", image: "https://i.imgur.com/bXsBqXV.png", link: "https://example.com/monkey" },
+            { word: "Skirt", translation: "Pachl", image: "https://i.imgur.com/oZY6zl2.png", link: "https://example.com/dog" },
+            { word: "Dress", translation: "Pachlon", image: "https://i.imgur.com/Pi5iAIu.png", link: "https://example.com/elephant" },
+            { word: "Sweatpants", translation: "Braugast", image: "https://i.imgur.com/QSGzBwH.png", link: "https://example.com/lion" },
+            { word: "Male<br>Underpants", translation: "Ungast", image: "https://i.imgur.com/SpaKG3j.png", link: "https://example.com/lion" },
+            { word: "Female<br>Underpants", translation: "Ungasta", image: "https://i.imgur.com/CKDGnMt.png", link: "https://example.com/lion" },
+            { word: "Bra", translation: "Brat", image: "https://i.imgur.com/T0DomdN.png", link: "https://example.com/monkey" },
+            { word: "Swimming<br>Trunks", translation: "Boxus", image: "https://i.imgur.com/0rRDH6j.png", link: "https://example.com/dog" },
+            { word: "Bikini", translation: "Boxus", image: "https://i.imgur.com/96xCknx.png", link: "https://example.com/elephant" },
+            { word: "Swimsuit", translation: "Kibeleik", image: "https://i.imgur.com/hkHcSDb.png", link: "https://example.com/lion" },
+            { word: "Pantyhose", translation: "Tilti", image: "https://i.imgur.com/WJdkVSV.png", link: "https://example.com/lion" },
+            { word: "Leggings", translation: "Gilling", image: "https://i.imgur.com/3yP0YMq.png", link: "https://example.com/lion" },
+            { word: "Belt", translation: "Gürde", image: "https://i.imgur.com/Fhxca5g.png", link: "https://example.com/dog" },
+            { word: "Suit", translation: "Trajer", image: "https://i.imgur.com/K52WAa6.png", link: "https://example.com/elephant" },
+            { word: "Hat", translation: "Lobb", image: "https://i.imgur.com/bXLOd2j.png", link: "https://example.com/lion" },
+            { word: "Gloves", translation: "Golfes", image: "https://i.imgur.com/85ZBC1t.png", link: "https://example.com/lion" },
+            { word: "Medical<br>Gloves", translation: "Letgolfes", image: "https://i.imgur.com/ITO9FaG.png", link: "https://example.com/lion" },
+            { word: "Stockings", translation: "Bokling", image: "https://i.imgur.com/5Q9CZB1.png", link: "https://example.com/dog" },
+            { word: "Scarf", translation: "Skaralet", image: "https://i.imgur.com/4hMKiPX.png", link: "https://example.com/elephant" },
+            { word: "Tie", translation: "Huden", image: "https://i.imgur.com/XCq6pUj.png", link: "https://example.com/lion" },
+            { word: "Pajamas", translation: "Domi Domi", image: "https://i.imgur.com/AIuHod8.png", link: "https://example.com/lion" },
+            { word: "Bathrobe", translation: "Tellur", image: "https://i.imgur.com/ekPrlVV.png", link: "https://example.com/lion" },
+            { word: "Cloak", translation: "Kot", image: "https://i.imgur.com/sxIaxpl.png", link: "https://example.com/lion" },
+            { word: "Coat", translation: "Salka", image: "https://i.imgur.com/y00oktC.png", link: "https://example.com/lion" },
+            { word: "Shorts", translation: "Neitgast", image: "https://i.imgur.com/YfpKH0j.png", link: "https://example.com/dog" },
+            { word: "Vest", translation: "Cucu", image: "https://i.imgur.com/NXBEiNM.png", link: "https://example.com/elephant" },
+            { word: "Sports Bra", translation: "Biache", image: "https://i.imgur.com/RC7dV6g.png", link: "https://example.com/lion" },
+            { word: "Tank Top", translation: "Flexitop", image: "https://i.imgur.com/3Kqc3xR.png", link: "https://example.com/lion" },
+            { word: "Raincoat", translation: "Zeluki", image: "https://i.imgur.com/C14zfhf.png", link: "https://example.com/lion" },
+            { word: "Boots", translation: "Onis", image: "https://i.imgur.com/ONIaC74.png", link: "https://example.com/monkey" },
+            { word: "Apron", translation: "Büzze", image: "https://i.imgur.com/twCQ0ZF.png", link: "https://example.com/dog" }
+            ]
+        };
+
+        // DOM elements
+        const overviewSection = document.getElementById('overview-section');
+        const flashcardsSection = document.getElementById('flashcards-section');
+        const testSection = document.getElementById('test-section');
+        const overviewTab = document.getElementById('overview-tab');
+        const flashcardsTab = document.getElementById('flashcards-tab');
+        const testTab = document.getElementById('test-tab');
+        
+        // Flashcard elements
+        const flashcardContainer = document.getElementById('flashcard-container');
+        const flashcardImage = document.getElementById('flashcard-image');
+        const flashcardWord = document.getElementById('flashcard-word');
+        const flashcardTranslation = document.getElementById('flashcard-translation');
+        const nextFlashcardBtn = document.getElementById('next-flashcard');
+        
+        // Test elements
+        const testImage = document.getElementById('test-image');
+        const testInput = document.getElementById('test-input');
+        const testSubmit = document.getElementById('test-submit');
+        const skipTestBtn = document.getElementById('skip-test');
+        const testFeedback = document.getElementById('test-feedback');
+        const testProgress = document.getElementById('test-progress');
+        
+        // Settings elements
+        const settingsIcon = document.getElementById('settings-icon');
+        const settingsOverlay = document.getElementById('settings-overlay');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closeSettings = document.getElementById('close-settings');
+        const topicsList = document.getElementById('topics-list');
+
+        // State variables
+        let currentFlashcardIndex = 0;
+        let currentTestIndex = 0;
+        let recentlyTestedIndices = [];
+        let recentlyFlashcardIndices = [];
+        let flashcardMode = 'random';
+        let activeTopics = {};
+        let currentVocabulary = [];
+
+        // Initialize the app
+        function init() {
+            // Initialize all topics as active by default
+            Object.keys(vocabularyData).forEach(topic => {
+                activeTopics[topic] = true;
+            });
+            
+            // Populate the topics list in settings
+            populateTopicsList();
+            
+            // Filter vocabulary based on active topics
+            updateVocabulary();
+            
+            // Preload images and setup the app
+            preloadImages().then(() => {
+                populateOverview();
+                setupFlashcards();
+                setupTest();
+                showSection('overview-section');
+            });
+            
+            // Set up event listeners for tabs
+            overviewTab.addEventListener('click', () => showSection('overview-section'));
+            flashcardsTab.addEventListener('click', () => showSection('flashcards-section'));
+            testTab.addEventListener('click', () => showSection('test-section'));
+            
+            // Set up event listeners for mode toggle
+            document.querySelectorAll('input[name="flashcard-mode"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    flashcardMode = e.target.value;
+                    if (flashcardMode === 'random') {
+                        recentlyFlashcardIndices = [];
+                        currentFlashcardIndex = getRandomFlashcardIndex();
+                    } else {
+                        currentFlashcardIndex = 0;
+                    }
+                    showFlashcard();
+                });
+            });
+            
+            // Settings panel event listeners
+            settingsIcon.addEventListener('click', toggleSettings);
+            closeSettings.addEventListener('click', closeSettingsPanel);
+            settingsOverlay.addEventListener('click', closeSettingsPanel);
+            
+            // Calculate scrollbar width to prevent layout shift
+            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+            document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+        }
+        
+        // Toggle settings panel
+        function toggleSettings() {
+            settingsOverlay.classList.toggle('active');
+            settingsPanel.classList.toggle('active');
+        }
+        
+        // Close settings panel
+        function closeSettingsPanel() {
+            settingsOverlay.classList.remove('active');
+            settingsPanel.classList.remove('active');
+        }
+        
+        // Populate the topics list in settings panel
+        function populateTopicsList() {
+            topicsList.innerHTML = '';
+            Object.keys(vocabularyData).forEach(topic => {
+                const topicItem = document.createElement('div');
+                topicItem.className = 'flex items-center';
+                const checkboxId = `topic-${topic.replace(/\s+/g, '-')}`;
+                topicItem.innerHTML = `
+                    <input type="checkbox" id="${checkboxId}" class="mr-2" ${activeTopics[topic] ? 'checked' : ''}>
+                    <label for="${checkboxId}" class="cursor-pointer">${topic}</label>
+                `;
+                
+                const checkbox = topicItem.querySelector('input');
+                checkbox.addEventListener('change', () => {
+                    activeTopics[topic] = checkbox.checked;
+                    updateVocabulary();
+                });
+                
+                topicsList.appendChild(topicItem);
+            });
+        }
+        
+        // Update vocabulary when topics change
+        function updateVocabulary() {
+            currentVocabulary = [];
+            Object.keys(vocabularyData).forEach(topic => {
+                if (activeTopics[topic]) {
+                    currentVocabulary = currentVocabulary.concat(vocabularyData[topic]);
+                }
+            });
+            
+            // Sort alphabetically
+            currentVocabulary.sort((a, b) => a.word.localeCompare(b.word));
+            
+            // Refresh all sections
+            populateOverview();
+            setupFlashcards();
+            setupTest();
+        }
+        
+        // Preload all images
+        function preloadImages() {
+            return new Promise((resolve) => {
+                let loaded = 0;
+                let total = 0;
+                
+                Object.values(vocabularyData).forEach(topic => {
+                    total += topic.length;
+                });
+                
+                Object.values(vocabularyData).forEach(topic => {
+                    topic.forEach(item => {
+                        const img = new Image();
+                        img.src = item.image;
+                        img.onload = () => {
+                            loaded++;
+                            if (loaded === total) resolve();
+                        };
+                        img.onerror = () => {
+                            loaded++;
+                            if (loaded === total) resolve();
+                        };
+                    });
+                });
+            });
+        }
+        
+        // Populate the overview section
+        function populateOverview() {
+            overviewSection.innerHTML = '';
+            
+            if (currentVocabulary.length === 0) {
+                overviewSection.innerHTML = '<p class="text-center text-gray-500">No topics selected. Please enable some topics in settings.</p>';
+                return;
+            }
+            
+            currentVocabulary.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-lg shadow-md overflow-hidden transform transition hover:scale-105 min-h-[140px] flex flex-col items-center p-5';
+                card.innerHTML = `
+                    <div class="flex w-full items-center">
+                        <div class="flex flex-col items-center">
+                            <img src="${item.image}" alt="${item.word}" class="w-20 h-20 object-cover rounded mb-2">
+                            <h3 class="text-lg font-semibold text-gray-800">${item.word}</h3>
+                        </div>
+                        <div class="flex-1 flex flex-col items-end">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-1">${item.translation}</h2>
+                        </div>
+                    </div>
+                `;
+                overviewSection.appendChild(card);
+            });
+        }
+        
+        // Set up flashcards functionality
+        function setupFlashcards() {
+            if (currentVocabulary.length === 0) {
+                flashcardsSection.innerHTML = '<p class="text-center text-gray-500">No topics selected. Please enable some topics in settings.</p>';
+                return;
+            }
+            
+            if (flashcardMode === 'random') {
+                currentFlashcardIndex = getRandomFlashcardIndex();
+            } else {
+                currentFlashcardIndex = 0;
+            }
+            showFlashcard();
+            
+            flashcardContainer.addEventListener('click', flipFlashcard);
+            nextFlashcardBtn.addEventListener('click', nextFlashcard);
+        }
+        
+        function showFlashcard() {
+            const item = currentVocabulary[currentFlashcardIndex];
+            flashcardImage.src = item.image;
+            flashcardWord.textContent = item.word;
+            flashcardTranslation.textContent = item.translation;
+            flashcardContainer.classList.remove('flipped');
+        }
+        
+        function flipFlashcard() {
+            flashcardContainer.classList.toggle('flipped');
+        }
+        
+        function getRandomFlashcardIndex() {
+            if (currentVocabulary.length === 0) return 0;
+            
+            const allIndices = currentVocabulary.map((_, index) => index);
+            const availableIndices = allIndices.filter(index => !recentlyFlashcardIndices.includes(index));
+            
+            if (availableIndices.length === 0) {
+                recentlyFlashcardIndices = [];
+                return Math.floor(Math.random() * currentVocabulary.length);
+            }
+            
+            const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            recentlyFlashcardIndices.push(randomIndex);
+            
+            if (recentlyFlashcardIndices.length > 10) {
+                recentlyFlashcardIndices.shift();
+            }
+            
+            return randomIndex;
+        }
+        
+        function nextFlashcard(event) {
+            event.stopPropagation();
+            const flashcardInner = flashcardContainer.querySelector('.flashcard-inner');
+            flashcardInner.style.transition = 'none';
+            flashcardContainer.classList.remove('flipped');
+            
+            if (currentVocabulary.length === 0) return;
+            
+            if (flashcardMode === 'random') {
+                currentFlashcardIndex = getRandomFlashcardIndex();
+            } else {
+                currentFlashcardIndex = (currentFlashcardIndex + 1) % currentVocabulary.length;
+            }
+            
+            showFlashcard();
+            
+            void flashcardInner.offsetWidth;
+            setTimeout(() => {
+                flashcardInner.style.transition = 'transform 0.6s';
+            }, 50);
+        }
+        
+        // Set up test functionality
+        function setupTest() {
+            if (currentVocabulary.length === 0) {
+                testSection.innerHTML = '<p class="text-center text-gray-500">No topics selected. Please enable some topics in settings.</p>';
+                return;
+            }
+            
+            recentlyTestedIndices = [];
+            currentTestIndex = getRandomTestIndex();
+            showTestQuestion();
+            
+            testSubmit.addEventListener('click', checkAnswer);
+            skipTestBtn.addEventListener('click', skipQuestion);
+            testInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkAnswer();
+            });
+        }
+        
+        function getRandomTestIndex() {
+            if (currentVocabulary.length === 0) return 0;
+            
+            const allIndices = currentVocabulary.map((_, index) => index);
+            const availableIndices = allIndices.filter(index => !recentlyTestedIndices.includes(index));
+            
+            if (availableIndices.length === 0) {
+                recentlyTestedIndices = [];
+                return Math.floor(Math.random() * currentVocabulary.length);
+            }
+            
+            const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            recentlyTestedIndices.push(randomIndex);
+            
+            if (recentlyTestedIndices.length > 10) {
+                recentlyTestedIndices.shift();
+            }
+            
+            return randomIndex;
+        }
+        
+        function showTestQuestion() {
+            if (currentVocabulary.length === 0) return;
+            
+            const item = currentVocabulary[currentTestIndex];
+            testImage.src = item.image;
+            testInput.value = '';
+            testFeedback.textContent = '';
+            testInput.focus();
+            updateTestProgress();
+        }
+        
+        function checkAnswer() {
+            if (currentVocabulary.length === 0) return;
+            
+            const userInput = testInput.value.trim().toLowerCase();
+            const correctAnswer = currentVocabulary[currentTestIndex].translation.toLowerCase();
+            
+            if (userInput === correctAnswer) {
+                testFeedback.textContent = 'Correct!';
+                testFeedback.className = 'text-lg mt-4 text-center text-green-600';
+                setTimeout(() => {
+                    currentTestIndex = getRandomTestIndex();
+                    showTestQuestion();
+                }, 1000);
+            } else {
+                testFeedback.textContent = `Incorrect. The correct answer is "${currentVocabulary[currentTestIndex].translation}".`;
+                testFeedback.className = 'text-lg mt-4 text-center text-red-600';
+                testInput.value = '';
+            }
+        }
+        
+        function skipQuestion() {
+            currentTestIndex = getRandomTestIndex();
+            showTestQuestion();
+        }
+        
+        function updateTestProgress() {
+            if (currentVocabulary.length === 0) {
+                testProgress.textContent = 'No words available';
+            } else {
+                testProgress.textContent = `${currentVocabulary.length} words in total`;
+            }
+        }
+        
+        // Show/hide sections
+        function showSection(sectionId) {
+            overviewSection.classList.add('hidden');
+            flashcardsSection.classList.add('hidden');
+            testSection.classList.add('hidden');
+            overviewTab.classList.remove('tab-active');
+            flashcardsTab.classList.remove('tab-active');
+            testTab.classList.remove('tab-active');
+            
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.getElementById(`${sectionId}-tab`).classList.add('tab-active');
+            
+            if (sectionId === 'flashcards-section') {
+                setupFlashcards();
+            } else if (sectionId === 'test-section') {
+                setupTest();
+            } else if (sectionId === 'overview-section') {
+                populateOverview();
+            }
+        }
+        
+        // Start the app
+        window.onload = init;
+    </script>
+</body>
+</html>
