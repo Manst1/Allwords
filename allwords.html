@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All words</title>
+    <title>All Words</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html {
@@ -233,8 +233,8 @@
         // Vocabulary data organized by topics
         const vocabularyData = {
             "Animals": [
-            { word: "Monkey", translation: "Gnisus", image: "https://i.imgur.com/vJtlBWM.png", link: "https://example.com/monkey" },
-            { word: "Alpaka", translation: "Al Aboc", image: "https://i.imgur.com/agGh5eh.png", link: "https://example.com/dog" },
+                { word: "Monkey", translation: "Gnisus", image: "https://i.imgur.com/vJtlBWM.png", link: "https://example.com/monkey" },
+{ word: "Alpaka", translation: "Al Aboc", image: "https://i.imgur.com/agGh5eh.png", link: "https://example.com/dog" },
             { word: "Polar Bear", translation: "Eisata", image: "https://i.imgur.com/5GbXrOr.png", link: "https://example.com/elephant" },
             { word: "Brown Bear", translation: "Bralata", image: "https://i.imgur.com/HiRxSt9.png", link: "https://example.com/lion" },
             { word: "Beaver", translation: "Castor", image: "https://i.imgur.com/R0oe4rm.png", link: "https://example.com/lion" },
@@ -304,7 +304,7 @@
             ],
             "Clothing": [
                 { word: "T-Shirt", translation: "Leik", image: "https://i.imgur.com/4t2oWET.png", link: "https://example.com/monkey" },
-            { word: "Shirt", translation: "Lierran", image: "https://i.imgur.com/M0yB7Ts.png", link: "https://example.com/dog" },
+{ word: "Shirt", translation: "Lierran", image: "https://i.imgur.com/M0yB7Ts.png", link: "https://example.com/dog" },
             { word: "Trousers", translation: "Gast", image: "https://i.imgur.com/dGTPNVD.png", link: "https://example.com/elephant" },
             { word: "Sweater", translation: "Lamba", image: "https://i.imgur.com/uZ0dTQR.png", link: "https://example.com/lion" },
             { word: "Socks", translation: "Mozes", image: "https://i.imgur.com/7g9YX2D.png", link: "https://example.com/lion" },
@@ -350,23 +350,17 @@
         const overviewTab = document.getElementById('overview-tab');
         const flashcardsTab = document.getElementById('flashcards-tab');
         const testTab = document.getElementById('test-tab');
-        
-        // Flashcard elements
         const flashcardContainer = document.getElementById('flashcard-container');
         const flashcardImage = document.getElementById('flashcard-image');
         const flashcardWord = document.getElementById('flashcard-word');
         const flashcardTranslation = document.getElementById('flashcard-translation');
         const nextFlashcardBtn = document.getElementById('next-flashcard');
-        
-        // Test elements
         const testImage = document.getElementById('test-image');
         const testInput = document.getElementById('test-input');
         const testSubmit = document.getElementById('test-submit');
         const skipTestBtn = document.getElementById('skip-test');
         const testFeedback = document.getElementById('test-feedback');
         const testProgress = document.getElementById('test-progress');
-        
-        // Settings elements
         const settingsIcon = document.getElementById('settings-icon');
         const settingsOverlay = document.getElementById('settings-overlay');
         const settingsPanel = document.getElementById('settings-panel');
@@ -381,6 +375,7 @@
         let flashcardMode = 'random';
         let activeTopics = {};
         let currentVocabulary = [];
+        let isCheckingAnswer = false;
 
         // Initialize the app
         function init() {
@@ -389,13 +384,9 @@
                 activeTopics[topic] = true;
             });
             
-            // Populate the topics list in settings
             populateTopicsList();
-            
-            // Filter vocabulary based on active topics
             updateVocabulary();
             
-            // Preload images and setup the app
             preloadImages().then(() => {
                 populateOverview();
                 setupFlashcards();
@@ -403,12 +394,12 @@
                 showSection('overview-section');
             });
             
-            // Set up event listeners for tabs
+            // Event listeners for tabs
             overviewTab.addEventListener('click', () => showSection('overview-section'));
             flashcardsTab.addEventListener('click', () => showSection('flashcards-section'));
             testTab.addEventListener('click', () => showSection('test-section'));
             
-            // Set up event listeners for mode toggle
+            // Event listeners for mode toggle
             document.querySelectorAll('input[name="flashcard-mode"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     flashcardMode = e.target.value;
@@ -427,24 +418,21 @@
             closeSettings.addEventListener('click', closeSettingsPanel);
             settingsOverlay.addEventListener('click', closeSettingsPanel);
             
-            // Calculate scrollbar width to prevent layout shift
+            // Calculate scrollbar width
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
         }
         
-        // Toggle settings panel
         function toggleSettings() {
             settingsOverlay.classList.toggle('active');
             settingsPanel.classList.toggle('active');
         }
         
-        // Close settings panel
         function closeSettingsPanel() {
             settingsOverlay.classList.remove('active');
             settingsPanel.classList.remove('active');
         }
         
-        // Populate the topics list in settings panel
         function populateTopicsList() {
             topicsList.innerHTML = '';
             Object.keys(vocabularyData).forEach(topic => {
@@ -466,7 +454,6 @@
             });
         }
         
-        // Update vocabulary when topics change
         function updateVocabulary() {
             currentVocabulary = [];
             Object.keys(vocabularyData).forEach(topic => {
@@ -475,16 +462,13 @@
                 }
             });
             
-            // Sort alphabetically
             currentVocabulary.sort((a, b) => a.word.localeCompare(b.word));
             
-            // Refresh all sections
             populateOverview();
             setupFlashcards();
             setupTest();
         }
         
-        // Preload all images
         function preloadImages() {
             return new Promise((resolve) => {
                 let loaded = 0;
@@ -511,7 +495,6 @@
             });
         }
         
-        // Populate the overview section
         function populateOverview() {
             overviewSection.innerHTML = '';
             
@@ -538,7 +521,6 @@
             });
         }
         
-        // Set up flashcards functionality
         function setupFlashcards() {
             if (currentVocabulary.length === 0) {
                 flashcardsSection.innerHTML = '<p class="text-center text-gray-500">No topics selected. Please enable some topics in settings.</p>';
@@ -611,7 +593,6 @@
             }, 50);
         }
         
-        // Set up test functionality
         function setupTest() {
             if (currentVocabulary.length === 0) {
                 testSection.innerHTML = '<p class="text-center text-gray-500">No topics selected. Please enable some topics in settings.</p>';
@@ -620,15 +601,26 @@
             
             recentlyTestedIndices = [];
             currentTestIndex = getRandomTestIndex();
-            showTestQuestion();
+            isCheckingAnswer = false;
             
-            testSubmit.addEventListener('click', checkAnswer);
+            // Clear previous event listeners
+            testSubmit.onclick = null;
+            skipTestBtn.onclick = null;
+            testInput.onkeydown = null;
+            
+            // Set up new event listeners
+            testSubmit.addEventListener('click', handleAnswerCheck);
             skipTestBtn.addEventListener('click', skipQuestion);
-            testInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') checkAnswer();
+            testInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAnswerCheck();
+                }
             });
+            
+            showTestQuestion();
         }
-        
+
         function getRandomTestIndex() {
             if (currentVocabulary.length === 0) return 0;
             
@@ -649,7 +641,7 @@
             
             return randomIndex;
         }
-        
+
         function showTestQuestion() {
             if (currentVocabulary.length === 0) return;
             
@@ -657,12 +649,14 @@
             testImage.src = item.image;
             testInput.value = '';
             testFeedback.textContent = '';
-            testInput.focus();
+            testInput.focus(); // Ensure focus is set
             updateTestProgress();
         }
-        
-        function checkAnswer() {
-            if (currentVocabulary.length === 0) return;
+
+        function handleAnswerCheck() {
+            // Prevent multiple submissions
+            if (isCheckingAnswer) return;
+            isCheckingAnswer = true;
             
             const userInput = testInput.value.trim().toLowerCase();
             const correctAnswer = currentVocabulary[currentTestIndex].translation.toLowerCase();
@@ -670,22 +664,29 @@
             if (userInput === correctAnswer) {
                 testFeedback.textContent = 'Correct!';
                 testFeedback.className = 'text-lg mt-4 text-center text-green-600';
+                
+                // Prepare for next question
                 setTimeout(() => {
                     currentTestIndex = getRandomTestIndex();
                     showTestQuestion();
-                }, 1000);
+                    isCheckingAnswer = false;
+                }, 800);
             } else {
                 testFeedback.textContent = `Incorrect. The correct answer is "${currentVocabulary[currentTestIndex].translation}".`;
                 testFeedback.className = 'text-lg mt-4 text-center text-red-600';
                 testInput.value = '';
+                testInput.focus(); // Maintain focus after incorrect answer
+                isCheckingAnswer = false;
             }
         }
-        
+
         function skipQuestion() {
+            if (isCheckingAnswer) return;
+            
             currentTestIndex = getRandomTestIndex();
             showTestQuestion();
         }
-        
+
         function updateTestProgress() {
             if (currentVocabulary.length === 0) {
                 testProgress.textContent = 'No words available';
@@ -694,7 +695,6 @@
             }
         }
         
-        // Show/hide sections
         function showSection(sectionId) {
             overviewSection.classList.add('hidden');
             flashcardsSection.classList.add('hidden');
