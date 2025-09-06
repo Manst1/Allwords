@@ -158,6 +158,9 @@
             background-color: rgba(0,0,0,0.3);
             transform: scale(1.1);
         }
+        #test-word {
+            min-height: 3rem; /* Ensure consistent height for single and multi-line words */
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -366,7 +369,6 @@
             { word: "Yellow", translation: "Elf", image: "https://i.imgur.com/ZdiZPXt.png", link: "https://example.com/lion" },
             { word: "Blue", translation: "Blö", image: "https://i.imgur.com/ROSod5f.png", link: "https://example.com/lion" }
             ],
-			
 			"Furniture": [
             { word: "Bed", translation: "Cama", image: "https://i.imgur.com/vxpzD0C.png", link: "https://example.com/monkey" },
             { word: "Table", translation: "Punk", image: "https://i.imgur.com/zS2xMZp.png", link: "https://example.com/dog" },
@@ -383,7 +385,6 @@
             { word: "Curtain", translation: "Kronikei", image: "https://i.imgur.com/Ya2vYEr.png", link: "https://example.com/monkey" },
             { word: "Armchair", translation: "Loek", image: "https://i.imgur.com/bnK4IFj.png", link: "https://example.com/dog" }
             ],
-			
 			"Body": [
             { word: "Hair", translation: "Pelos", image: "https://i.imgur.com/KSKzpso.png" },
             { word: "Neck", translation: "Albi", image: "https://i.imgur.com/nLFZTfd.png" },
@@ -411,7 +412,7 @@
             { word: "Nose", translation: "Odorus", image: "https://i.imgur.com/wWS95Ja.png" },
             { word: "Beard", translation: "Prenning", image: "https://i.imgur.com/dRiC5Ma.png" },
             { word: "Testicles", translation: "Grünus", image: "https://i.imgur.com/f4K8qJZ.png" },
-            { word: "Penis", translation: "Pentus", image: "https://i.imgur.com/Cc5hB6U.png" },
+            { word: "Penis", translation: "Pentus", image: "https://i.imgur.com/zjPgW0F.png" },
             { word: "Vagina", translation: "Nistus", image: "https://i.imgur.com/b8MuZ6h.png" },
             { word: "Back", translation: "Bnakk", image: "https://i.imgur.com/GQpgTeu.png" },
 			{ word: "Armpit", translation: "Snolf", image: "https://i.imgur.com/PTycAyC.png" },
@@ -472,6 +473,14 @@
 
         // Initialize the app
         function init() {
+            // Check if critical DOM elements exist
+            if (!overviewSection || !flashcardsSection || !testSection || !overviewTab || !flashcardsTab || !testTab) {
+                console.error('One or more critical DOM elements are missing:', {
+                    overviewSection, flashcardsSection, testSection, overviewTab, flashcardsTab, testTab
+                });
+                return;
+            }
+
             // Initialize all topics as active by default
             Object.keys(vocabularyData).forEach(topic => {
                 activeTopics[topic] = true;
@@ -515,9 +524,13 @@
             });
             
             // Settings panel event listeners
-            settingsIcon.addEventListener('click', toggleSettings);
-            closeSettings.addEventListener('click', closeSettingsPanel);
-            settingsOverlay.addEventListener('click', closeSettingsPanel);
+            if (settingsIcon && settingsOverlay && closeSettings) {
+                settingsIcon.addEventListener('click', toggleSettings);
+                closeSettings.addEventListener('click', closeSettingsPanel);
+                settingsOverlay.addEventListener('click', closeSettingsPanel);
+            } else {
+                console.error('Settings elements are missing:', { settingsIcon, settingsOverlay, closeSettings });
+            }
             
             // Calculate scrollbar width
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -525,16 +538,28 @@
         }
         
         function toggleSettings() {
-            settingsOverlay.classList.toggle('active');
-            settingsPanel.classList.toggle('active');
+            if (settingsOverlay && settingsPanel) {
+                settingsOverlay.classList.toggle('active');
+                settingsPanel.classList.toggle('active');
+            } else {
+                console.error('Cannot toggle settings: overlay or panel is null');
+            }
         }
         
         function closeSettingsPanel() {
-            settingsOverlay.classList.remove('active');
-            settingsPanel.classList.remove('active');
+            if (settingsOverlay && settingsPanel) {
+                settingsOverlay.classList.remove('active');
+                settingsPanel.classList.remove('active');
+            } else {
+                console.error('Cannot close settings: overlay or panel is null');
+            }
         }
         
         function populateTopicsList() {
+            if (!topicsList) {
+                console.error('Topics list element is null');
+                return;
+            }
             topicsList.innerHTML = '';
             Object.keys(vocabularyData).forEach(topic => {
                 const topicItem = document.createElement('div');
@@ -602,6 +627,10 @@
         }
         
         function populateOverview() {
+            if (!overviewSection) {
+                console.error('Overview section element is null');
+                return;
+            }
             overviewSection.innerHTML = '';
             
             if (currentVocabulary.length === 0) {
@@ -661,6 +690,10 @@
         }
         
         function setupFlashcards() {
+            if (!flashcardsSection) {
+                console.error('Flashcards section element is null');
+                return;
+            }
             if (currentVocabulary.length === 0) {
                 flashcardsSection.innerHTML = '<p class="text-center text-gray-500">No topics selected. Please enable some topics in settings.</p>';
                 return;
@@ -673,11 +706,19 @@
             }
             showFlashcard();
             
-            flashcardContainer.addEventListener('click', flipFlashcard);
-            nextFlashcardBtn.addEventListener('click', nextFlashcard);
+            if (flashcardContainer && nextFlashcardBtn) {
+                flashcardContainer.addEventListener('click', flipFlashcard);
+                nextFlashcardBtn.addEventListener('click', nextFlashcard);
+            } else {
+                console.error('Flashcard elements are missing:', { flashcardContainer, nextFlashcardBtn });
+            }
         }
         
         function showFlashcard() {
+            if (!flashcardImage || !flashcardWord || !flashcardTranslation || !flashcardContainer) {
+                console.error('Flashcard DOM elements are missing:', { flashcardImage, flashcardWord, flashcardTranslation, flashcardContainer });
+                return;
+            }
             const item = currentVocabulary[currentFlashcardIndex];
             flashcardImage.src = item.image;
             flashcardWord.textContent = item.word;
@@ -686,7 +727,11 @@
         }
         
         function flipFlashcard() {
-            flashcardContainer.classList.toggle('flipped');
+            if (flashcardContainer) {
+                flashcardContainer.classList.toggle('flipped');
+            } else {
+                console.error('Cannot flip flashcard: container is null');
+            }
         }
         
         function getRandomFlashcardIndex() {
@@ -712,7 +757,15 @@
         
         function nextFlashcard(event) {
             event.stopPropagation();
+            if (!flashcardContainer) {
+                console.error('Flashcard container is null');
+                return;
+            }
             const flashcardInner = flashcardContainer.querySelector('.flashcard-inner');
+            if (!flashcardInner) {
+                console.error('Flashcard inner element is null');
+                return;
+            }
             flashcardInner.style.transition = 'none';
             flashcardContainer.classList.remove('flipped');
             
@@ -733,6 +786,10 @@
         }
         
         function setupTest() {
+            if (!testSection) {
+                console.error('Test section element is null');
+                return;
+            }
             if (currentVocabulary.length === 0) {
                 testSection.innerHTML = '<p class="text-center text-gray-500">No topics selected. Please enable some topics in settings.</p>';
                 return;
@@ -743,19 +800,23 @@
             isCheckingAnswer = false;
             
             // Clear previous event listeners
-            testSubmit.onclick = null;
-            skipTestBtn.onclick = null;
-            testInput.onkeydown = null;
+            if (testSubmit) testSubmit.onclick = null;
+            if (skipTestBtn) skipTestBtn.onclick = null;
+            if (testInput) testInput.onkeydown = null;
             
             // Set up new event listeners
-            testSubmit.addEventListener('click', handleAnswerCheck);
-            skipTestBtn.addEventListener('click', skipQuestion);
-            testInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAnswerCheck();
-                }
-            });
+            if (testSubmit && skipTestBtn && testInput) {
+                testSubmit.addEventListener('click', handleAnswerCheck);
+                skipTestBtn.addEventListener('click', skipQuestion);
+                testInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAnswerCheck();
+                    }
+                });
+            } else {
+                console.error('Test elements are missing:', { testSubmit, skipTestBtn, testInput });
+            }
             
             showTestQuestion();
         }
@@ -784,9 +845,14 @@
         function showTestQuestion() {
             if (currentVocabulary.length === 0) return;
             
+            if (!testImage || !testWord || !testInput || !testFeedback || !testProgress) {
+                console.error('Test DOM elements are missing:', { testImage, testWord, testInput, testFeedback, testProgress });
+                return;
+            }
+            
             const item = currentVocabulary[currentTestIndex];
             testImage.src = item.image;
-            testWord.textContent = item.word;
+            testWord.innerHTML = item.word.replace(/<br>/g, '<br>');
             testInput.value = '';
             testFeedback.textContent = '';
             testInput.focus(); // Ensure focus is set
@@ -797,6 +863,12 @@
             // Prevent multiple submissions
             if (isCheckingAnswer) return;
             isCheckingAnswer = true;
+            
+            if (!testInput || !testFeedback) {
+                console.error('Test input or feedback elements are missing:', { testInput, testFeedback });
+                isCheckingAnswer = false;
+                return;
+            }
             
             const userInput = testInput.value.trim().toLowerCase();
             const correctAnswer = currentVocabulary[currentTestIndex].translation.toLowerCase();
@@ -828,6 +900,10 @@
         }
 
         function updateTestProgress() {
+            if (!testProgress) {
+                console.error('Test progress element is null');
+                return;
+            }
             if (currentVocabulary.length === 0) {
                 testProgress.textContent = 'No words available';
             } else {
@@ -836,6 +912,13 @@
         }
         
         function showSection(sectionId) {
+            if (!overviewSection || !flashcardsSection || !testSection || !overviewTab || !flashcardsTab || !testTab) {
+                console.error('One or more section/tab elements are null:', {
+                    overviewSection, flashcardsSection, testSection, overviewTab, flashcardsTab, testTab
+                });
+                return;
+            }
+            
             overviewSection.classList.add('hidden');
             flashcardsSection.classList.add('hidden');
             testSection.classList.add('hidden');
@@ -843,8 +926,22 @@
             flashcardsTab.classList.remove('tab-active');
             testTab.classList.remove('tab-active');
             
-            document.getElementById(sectionId).classList.remove('hidden');
-            document.getElementById(`${sectionId}-tab`).classList.add('tab-active');
+            const section = document.getElementById(sectionId);
+            // Map section ID to correct tab ID
+            const tabIdMap = {
+                'overview-section': 'overview-tab',
+                'flashcards-section': 'flashcards-tab',
+                'test-section': 'test-tab'
+            };
+            const tabId = tabIdMap[sectionId];
+            const tab = document.getElementById(tabId);
+            
+            if (section && tab) {
+                section.classList.remove('hidden');
+                tab.classList.add('tab-active');
+            } else {
+                console.error(`Section or tab for ${sectionId} not found`, { section, tab });
+            }
             
             if (sectionId === 'flashcards-section') {
                 setupFlashcards();
